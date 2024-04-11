@@ -1,0 +1,48 @@
+kind: Environment
+name: playwright-tests
+type: primary
+environmentVariables:
+    SAMPLE_VAR: '{{env.unique}}'
+components:
+    -
+        kind: Application
+        name: application
+        gitRepo: 'https://github.com/alexo-bunnyshell/example-github-actions.git'
+        gitBranch: main
+        gitApplicationPath: /
+        dockerCompose:
+            build:
+                context: .
+                dockerfile: Dockerfile
+                target: prod
+            ports:
+                - '8080:80'
+        hosts:
+            -
+                hostname: 'application-{{ env.base_domain }}'
+                path: /
+                servicePort: 8080
+    -
+        kind: Application
+        name: playwright
+        gitRepo: 'https://github.com/alexo-bunnyshell/template-playwright.git'
+        gitBranch: main
+        gitApplicationPath: /
+        dockerCompose:
+            build:
+                context: .
+                dockerfile: docker/Dockerfile
+            entrypoint: /bin/bash
+            command: '-c "npx playwright test; npx playwright show-report --host 0.0.0.0; sleep 3600"'
+            ports:
+                - 9323
+            environment:
+                PW_TEST_HTML_REPORT_OPEN: never
+                TEST_LOCAL_URL: 'http://{{ components.application.name }}:8080'
+                TEST_SECURE_URL: 'https://{{ components.application.ingress.hosts[0].url }}'
+                CI: 'true'
+        hosts:
+            -
+                hostname: 'playwright-{{ env.base_domain }}'
+                path: /
+                servicePort: 9323
