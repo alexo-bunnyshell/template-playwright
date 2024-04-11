@@ -5,7 +5,7 @@ icons: [ playwright]
 stack:
   packages:
     - name: nodejs
-      version: '>14'
+      version: '20.8.1'
     - name: playwright
       version: '1.43'
 discoverable: true
