@@ -52,7 +52,7 @@ components:
                 hostname: 'playwright-{{ env.base_domain }}'
                 path: /
                 servicePort: 9323
-        -
+    -    
         kind: Terraform
         name: s3-bucket
         gitRepo: 'https://github.com/bunnyshell/templates.git'
@@ -80,34 +80,7 @@ components:
             AWS_ACCESS_KEY_ID: '{{ template.vars.AWS_ACCESS_KEY_ID }}'
             AWS_REGION: '{{ template.vars.AWS_REGION }}'
             AWS_SECRET_ACCESS_KEY: '{{ template.vars.AWS_SECRET_ACCESS_KEY }}'
-    -
-        kind: Terraform
-        name: s3-bucket
-        gitRepo: 'https://github.com/bunnyshell/templates.git'
-        gitBranch: main
-        gitApplicationPath: components/tf-aws-s3
-        runnerImage: 'ghcr.io/opentofu/opentofu:1.7.0-rc1'
-        deploy:
-            - 'cd components/tf-aws-s3'
-            - 'ls -alh'
-            - '/bns/helpers/terraform/get_managed_backend > zz_backend_override.tf'
-            - 'tofu init -input=false -no-color'
-            - 'tofu apply -var "bucket_name=ao-test-{{ env.name }}" -input=false -auto-approve -no-color'
-            - 'BNS_TF_STATE_LIST=`tofu show -json`'
-            - 'BUCKET_NAME=`tofu output --raw s3_bucket_name`'
-            - 'BUCKET_REGION=`tofu output --raw s3_bucket_region`'
-        destroy:
-            - 'cd components/tf-aws-s3'
-            - '/bns/helpers/terraform/get_managed_backend > zz_backend_override.tf'
-            - 'tofu init -input=false -no-color'
-            - 'tofu destroy -var "bucket_name=ao-test-{{ env.name }}" -input=false -auto-approve -no-color'
-        exportVariables:
-            - BUCKET_NAME
-            - BUCKET_REGION
-        environment:
-            AWS_ACCESS_KEY_ID: '{{ template.vars.AWS_ACCESS_KEY_ID }}'
-            AWS_REGION: '{{ template.vars.AWS_REGION }}'
-            AWS_SECRET_ACCESS_KEY: '{{ template.vars.AWS_SECRET_ACCESS_KEY }}'
+    
     -
         kind: Terraform
         name: password
