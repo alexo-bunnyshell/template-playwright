@@ -7,5 +7,5 @@ stack:
     - name: nodejs
       version: '20.8.1'
     - name: playwright
-      version: '1.43'
+      version: '1.45'
 discoverable: true

@@ -3,29 +3,32 @@ name: playwright-tests
 type: primary
 environmentVariables:
     SAMPLE_VAR: '{{env.unique}}'
+    VITE_APP_NAME: 'Playwright Test'
 components:
+
     -
         kind: Application
         name: application
-        gitRepo: 'https://github.com/alexo-bunnyshell/example-github-actions.git'
+        gitRepo: 'https://github.com/bunnyshell/template-vue-tailwind.git'
         gitBranch: main
         gitApplicationPath: /
         dockerCompose:
             build:
                 context: .
                 dockerfile: Dockerfile
-                target: prod
+                args:
+                    VITE_APP_NAME: '{{env.vars.VITE_APP_NAME}}'
             ports:
-                - '8080:80'
+                - '3000:3000'
         hosts:
             -
-                hostname: 'application-{{ env.base_domain }}'
+                hostname: 'vue-{{ env.base_domain }}'
                 path: /
-                servicePort: 8080
+                servicePort: 3000    
     -
         kind: Application
         name: playwright
-        gitRepo: 'https://github.com/alexo-bunnyshell/template-playwright.git'
+        gitRepo: 'https://github.com/bunnyshell/template-playwright.git'
         gitBranch: main
         gitApplicationPath: /
         dockerCompose:
