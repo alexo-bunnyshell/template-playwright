@@ -36,6 +36,7 @@ Environment variables in `bunnyshell.yaml`:
 |---|---|---|
 | `E2E_BLOCKING` | `true` | Fail the deploy when tests fail. Set to `false` to only publish the report. |
 | `PW_BROWSERS` | `chromium` | Comma-separated browsers: `chromium`, `firefox`, `webkit`. |
+| `PW_TRACE` / `PW_VIDEO` | `retain-on-failure` | Set to `on` to keep a trace or video for passing tests too (useful for demos). |
 
 Variables read by the test container:
 

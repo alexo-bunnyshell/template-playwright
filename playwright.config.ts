@@ -7,7 +7,11 @@ import { defineConfig, devices } from '@playwright/test';
  *   BASE_URL      URL the tests open with page.goto('/')
  *   PW_BROWSERS   comma-separated: chromium,firefox,webkit (default: chromium)
  *   REPORT_DIR    where the HTML report is written (default: playwright-report)
+ *   PW_TRACE      trace mode (default: retain-on-failure; "on" keeps traces for passing tests too)
+ *   PW_VIDEO      video mode (default: retain-on-failure)
  */
+type Mode = 'on' | 'off' | 'retain-on-failure' | 'on-first-retry';
+
 const browsers = (process.env.PW_BROWSERS || 'chromium').split(',').map((b) => b.trim());
 
 const allProjects = {
@@ -32,9 +36,9 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL,
     /* Keep the evidence for every failure: trace, screenshot and video. */
-    trace: 'retain-on-failure',
+    trace: (process.env.PW_TRACE as Mode) || 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: (process.env.PW_VIDEO as Mode) || 'retain-on-failure',
     ignoreHTTPSErrors: true,
   },
   projects: browsers.map((b) => {
