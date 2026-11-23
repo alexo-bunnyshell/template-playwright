@@ -1,1 +1,5 @@
-.docker
+.git
+.bunnyshell
+node_modules
+playwright-report
+test-results

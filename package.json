@@ -1,0 +1,14 @@
+{
+  "name": "template-playwright",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Playwright end-to-end tests that run inside a Bunnyshell environment",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "^26.0.0"
+  }
+}
