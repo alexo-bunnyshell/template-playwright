@@ -1,12 +1,16 @@
 kind: Environment
-name: playwright-tests
+name: playwright-e2e
 type: primary
 environmentVariables:
-    SAMPLE_VAR: '{{env.unique}}'
     VITE_APP_NAME: 'Playwright Test'
+    # true: failing tests fail the environment deploy (and the PR status, for
+    # preview environments). false: tests still run and publish a report.
+    E2E_BLOCKING: 'true'
+    # Comma-separated: chromium,firefox,webkit
+    PW_BROWSERS: chromium
 components:
-
     -
+        # The application under test. Replace with your own components.
         kind: Application
         name: application
         gitRepo: 'https://github.com/bunnyshell/template-vue-tailwind.git'
@@ -15,37 +19,63 @@ components:
         dockerCompose:
             build:
                 context: .
-                dockerfile: Dockerfile
+                dockerfile: docker/app/Dockerfile
                 args:
-                    VITE_APP_NAME: '{{env.vars.VITE_APP_NAME}}'
+                    VITE_APP_NAME: '{{ env.vars.VITE_APP_NAME }}'
             ports:
                 - '3000:3000'
         hosts:
             -
-                hostname: 'vue-{{ env.base_domain }}'
+                hostname: 'app-{{ env.base_domain }}'
                 path: /
-                servicePort: 3000    
+                servicePort: 3000
     -
+        # Holds the test suite and serves the latest HTML report. It does not run
+        # tests by itself; the e2e-tests component below triggers a run.
         kind: Application
         name: playwright
-        gitRepo: 'https://github.com/bunnyshell/template-playwright.git'
+        gitRepo: 'https://github.com/alexo-bunnyshell/template-playwright.git'
         gitBranch: main
         gitApplicationPath: /
         dockerCompose:
             build:
                 context: .
                 dockerfile: docker/Dockerfile
-            entrypoint: /bin/bash
-            command: '-c "npx playwright test; npx playwright show-report --host 0.0.0.0; sleep 3600"'
             ports:
-                - 9323
+                - '9323:9323'
             environment:
-                PW_TEST_HTML_REPORT_OPEN: never
-                TEST_LOCAL_URL: 'http://{{ components.application.name }}:8080'
-                TEST_SECURE_URL: 'https://{{ components.application.ingress.hosts[0].url }}'
-                CI: 'true'
+                BASE_URL: 'https://{{ components.application.ingress.hosts[0].hostname }}'
+                TEST_LOCAL_URL: 'http://{{ components.application.name }}:3000'
+                WAIT_FOR_URLS: 'http://{{ components.application.name }}:3000,https://{{ components.application.ingress.hosts[0].hostname }}'
+                EXPECTED_APP_NAME: '{{ env.vars.VITE_APP_NAME }}'
+                PW_BROWSERS: '{{ env.vars.PW_BROWSERS }}'
+                REPORT_URL: 'https://playwright-{{ env.base_domain }}'
         hosts:
             -
                 hostname: 'playwright-{{ env.base_domain }}'
                 path: /
                 servicePort: 9323
+    -
+        # Runs the suite on every deploy and start, inside the playwright pod, so
+        # the tests can reach internal services. Its exit code is the deploy result.
+        kind: KubernetesManifest
+        name: e2e-tests
+        runnerImage: 'alpine/k8s:1.37.1'
+        dependsOn:
+            - application
+            - playwright
+        deploy: &e2e_steps
+            - 'kubectl rollout status deployment/{{ components.playwright.name }} --timeout=300s'
+            - |
+              kubectl exec deployment/{{ components.playwright.name }} -- /app/scripts/run-tests.sh
+              rc=$?
+              echo "Playwright report: https://playwright-{{ env.base_domain }}"
+              if [ "$rc" -ne 0 ] && [ "{{ env.vars.E2E_BLOCKING }}" != "true" ]; then
+                echo "Tests failed, but E2E_BLOCKING is not 'true': not failing the deploy."
+                rc=0
+              fi
+              [ "$rc" -eq 0 ]
+        # The report lives in the pod, which restarts on environment start.
+        start: *e2e_steps
+        destroy:
+            - 'echo "Nothing to clean up: e2e-tests creates no cluster resources."'

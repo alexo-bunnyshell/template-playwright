@@ -1,11 +1,11 @@
 name: Playwright Testing Environment
-description: This template creates an environment that runs Playwright tests against another application.
-tags: [ playwright, testing, automation]
-icons: [ playwright]
+description: Runs Playwright end-to-end tests inside the environment on every deploy, publishes the HTML report and fails the deploy when tests fail.
+tags: [ playwright, testing, e2e, automation ]
+icons: [ playwright ]
 stack:
   packages:
     - name: nodejs
-      version: '20.8.1'
+      version: '26'
     - name: playwright
-      version: '1.45'
+      version: '1.65'
 discoverable: true
